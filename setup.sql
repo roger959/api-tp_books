@@ -1,0 +1,18 @@
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE favorites (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    book_id VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    authors VARCHAR(255),
+    thumbnail VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+ALTER TABLE users ADD COLUMN name VARCHAR(255);
+ALTER TABLE users ADD COLUMN avatar VARCHAR(255);
