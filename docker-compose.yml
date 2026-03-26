@@ -1,0 +1,40 @@
+services:
+  web:
+    build:
+      context: .
+    container_name: tp_books_web
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_USER: tp_books_user
+      DB_PASS: tp_books_password
+      DB_NAME: tp_librairie
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+
+  db:
+    image: mysql:8.0
+    container_name: tp_books_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tp_librairie
+      MYSQL_USER: tp_books_user
+      MYSQL_PASSWORD: tp_books_password
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./setup.sql:/docker-entrypoint-initdb.d/setup.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  db_data:

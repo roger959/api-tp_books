@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="auth-highlights">
                 <div>Recherche rapide de livres via Google Books.</div>
                 <div>Gestion simple de votre selection favorite.</div>
-                <div>Design plus moderne avec fond video et panneaux contrastes.</div>
+                <div>Nouvelle interface editoriale avec cartes plus lisibles et contraste renforce.</div>
             </div>
         </section>
         <section class="auth-panel">

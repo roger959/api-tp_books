@@ -16,6 +16,19 @@ function searchBooks($query)
     return json_decode($response, true);
 }
 
+function normalizeThumbnailUrl($url)
+{
+    if (empty($url)) {
+        return 'https://via.placeholder.com/300x420?text=Livre';
+    }
+
+    $normalizedUrl = str_replace('http://', 'https://', $url);
+    $normalizedUrl = preg_replace('/&zoom=\d+/', '&zoom=0', $normalizedUrl);
+    $normalizedUrl = preg_replace('/([&?])edge=curl/', '$1edge=none', $normalizedUrl);
+
+    return $normalizedUrl;
+}
+
 // Gestion des soumissions de formulaire
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['login'])) {
@@ -57,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $book_id = $_POST['book_id'];
         $title = $_POST['title'];
         $authors = $_POST['authors'];
-        $thumbnail = $_POST['thumbnail'];
+        $thumbnail = normalizeThumbnailUrl($_POST['thumbnail']);
         $user_id = $_SESSION['user_id'];
 
         $stmt = $mysqli->prepare('INSERT INTO favorites (user_id, book_id, title, authors, thumbnail) VALUES (?, ?, ?, ?, ?)');
@@ -207,7 +220,7 @@ $favorites = $result->fetch_all(MYSQLI_ASSOC);
                         $volume = $book['volumeInfo'] ?? [];
                         $title = $volume['title'] ?? 'Titre indisponible';
                         $authors = !empty($volume['authors']) ? implode(', ', $volume['authors']) : 'Auteur inconnu';
-                        $thumbnail = $volume['imageLinks']['thumbnail'] ?? 'https://via.placeholder.com/300x420?text=Livre';
+                        $thumbnail = normalizeThumbnailUrl($volume['imageLinks']['smallThumbnail'] ?? $volume['imageLinks']['thumbnail'] ?? '');
                         ?>
                         <li class="book-card">
                             <img class="book-cover" src="<?= htmlspecialchars($thumbnail) ?>"
@@ -251,7 +264,7 @@ $favorites = $result->fetch_all(MYSQLI_ASSOC);
                 <ul class="book-grid">
                     <?php foreach ($favorites as $favorite): ?>
                         <li class="book-card">
-                            <img class="book-cover" src="<?= htmlspecialchars($favorite['thumbnail']) ?>"
+                            <img class="book-cover" src="<?= htmlspecialchars(normalizeThumbnailUrl($favorite['thumbnail'])) ?>"
                                 alt="Couverture de <?= htmlspecialchars($favorite['title']) ?>">
                             <div>
                                 <h3><?= htmlspecialchars($favorite['title']) ?></h3>

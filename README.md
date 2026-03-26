@@ -27,7 +27,7 @@ L'application repose sur une architecture PHP simple, sans framework, avec :
 - recherche de livres en ligne
 - sauvegarde des favoris en base de donnees
 - mise a jour du profil utilisateur
-- interface responsive avec fond video
+- interface responsive avec habillage editorial clair
 
 ## Structure du projet
 
@@ -86,7 +86,7 @@ SOURCE setup.sql;
 
 ### 3. Verifier la configuration de la base
 
-Le fichier `config.php` utilise par defaut :
+Le fichier `config.php` accepte des variables d'environnement et utilise par defaut :
 
 ```php
 define('DB_HOST', 'localhost');
@@ -97,7 +97,41 @@ define('DB_NAME', 'tp_librairie');
 
 Adaptez ces valeurs si votre configuration MySQL est differente.
 
+Avec Docker, ces valeurs sont injectees automatiquement par `docker-compose.yml`.
+
 ## Lancer le projet
+
+### Avec Docker
+
+Depuis le dossier du projet, lancez :
+
+```powershell
+docker compose up --build
+```
+
+Ensuite, ouvrez votre navigateur sur :
+
+```text
+http://localhost:8080/connexion.php
+```
+
+Configuration Docker incluse :
+
+- PHP 8.2 avec Apache
+- extensions `mysqli` et `curl`
+- MySQL 8.0
+- import automatique du script `setup.sql` au premier demarrage
+- application exposee sur le port `8080`
+- base MySQL exposee sur le port `3307`
+
+Si vous voulez reinitialiser completement la base Docker et rejouer `setup.sql`, utilisez :
+
+```powershell
+docker compose down -v
+docker compose up --build
+```
+
+### Sans Docker
 
 Depuis le dossier du projet, lancez le serveur PHP embarque :
 
@@ -186,9 +220,9 @@ L'interface est centralisee dans `styles.css`.
 
 Les principaux choix visuels incluent :
 
-- theme moderne sombre
-- panneaux translucides
-- fond video plein ecran
+- theme clair editorial
+- cartes plus lisibles et contraste plus net
+- fond 100% CSS sans image ni video
 - mise en page responsive
 
 ## Points d'attention
@@ -197,6 +231,33 @@ Les principaux choix visuels incluent :
 - l'extension cURL doit etre disponible pour la recherche de livres
 - l'extension mysqli doit etre activee pour l'acces a la base
 - l'API Google Books est utilisee en ligne, donc une connexion Internet est necessaire pour la recherche
+- le fichier `video.php` est conserve mais ne rend plus de fond media
+
+## Fichiers Docker
+
+Le projet contient maintenant les fichiers suivants pour un lancement conteneurise :
+
+- `Dockerfile`
+- `docker-compose.yml`
+- `.dockerignore`
+
+Commande recommandee pour travailler localement :
+
+```powershell
+docker compose up --build
+```
+
+Pour arreter les conteneurs :
+
+```powershell
+docker compose down
+```
+
+Pour supprimer aussi le volume MySQL et reinitialiser la base :
+
+```powershell
+docker compose down -v
+```
 
 ## Ameliorations possibles
 
