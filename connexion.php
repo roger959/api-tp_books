@@ -30,123 +30,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error_message = "Identifiants incorrects";
     }
 }
-
-
-include "video.php";
 ?>
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion</title>
-    <style>
-        /* Arrière-plan et styles généraux */
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #000000, #3a3a3a); /* Noir et gris foncé */
-            color: #ffd700; /* Or */
-        }
-
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('https://www.transparenttextures.com/patterns/cubes.png');
-            opacity: 0.1;
-            z-index: -1;
-        }
-
-        .login-container {
-            background: rgba(0, 0, 0, 0.9); /* Noir opaque */
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            width: 350px;
-            text-align: center;
-        }
-
-        .login-container h2 {
-            margin-bottom: 20px;
-            color: #ffd700; /* Or */
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-        }
-
-        .login-container input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #ffd700; /* Or */
-            border-radius: 5px;
-            background: rgba(0, 0, 0, 0.3); /* Noir transparent */
-            color: #fff; /* Blanc */
-            transition: border-color 0.3s;
-        }
-
-        .login-container input:focus {
-            border-color: #fff; /* Blanc */
-            outline: none;
-        }
-
-        .login-container button {
-            width: 100%;
-            padding: 12px;
-            background: #ffd700; /* Or */
-            color: black;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .login-container button:hover {
-            background: #fff; /* Blanc */
-            color: black;
-        }
-
-        .message {
-            margin-top: 10px;
-            color: red;
-            font-weight: bold;
-        }
-
-        .signup-link {
-            margin-top: 20px;
-            display: block;
-            text-align: center;
-            color: #ffd700; /* Or */
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .signup-link:hover {
-            color: #fff; /* Blanc */
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <div class="login-container">
-        <h2>Connexion</h2>
-        <form method="POST">
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Mot de passe" required>
-            <button type="submit">Se connecter</button>
-        </form>
-        <?php if (isset($error_message)): ?>
-            <div class="message"><?= $error_message ?></div>
-        <?php endif; ?>
-        <a href="inscription.php" class="signup-link">Pas encore inscrit ? Inscrivez-vous ici</a>
+
+<body class="auth-page">
+    <?php include 'video.php'; ?>
+    <div class="auth-card">
+        <section class="auth-copy">
+            <div>
+                <p class="eyebrow">Club et competitions</p>
+                <h1>Entrez dans votre espace lecture.</h1>
+                <p>Connectez-vous pour retrouver vos favoris, explorer de nouveaux titres et profiter d'une interface
+                    plus claire et plus immersive.</p>
+            </div>
+            <div class="auth-highlights">
+                <div>Recherche rapide de livres via Google Books.</div>
+                <div>Gestion simple de votre selection favorite.</div>
+                <div>Design plus moderne avec fond video et panneaux contrastes.</div>
+            </div>
+        </section>
+        <section class="auth-panel">
+            <h2>Connexion</h2>
+            <p>Renseignez vos identifiants pour acceder a votre bibliotheque.</p>
+            <?php if (isset($error_message)): ?>
+                <div class="message message-error"><?= htmlspecialchars($error_message) ?></div>
+            <?php endif; ?>
+            <form method="POST" class="stack-form">
+                <div>
+                    <label class="field-label" for="email">Email</label>
+                    <input id="email" type="email" name="email" placeholder="vous@exemple.com" required>
+                </div>
+                <div>
+                    <label class="field-label" for="password">Mot de passe</label>
+                    <input id="password" type="password" name="password" placeholder="Votre mot de passe" required>
+                </div>
+                <button class="button-primary" type="submit">Se connecter</button>
+            </form>
+            <p>Pas encore de compte ? <a href="inscription.php" class="text-link">Creer un profil</a></p>
+        </section>
     </div>
 </body>
+
 </html>

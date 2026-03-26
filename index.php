@@ -1,10 +1,11 @@
-<?php 
+<?php
 
 session_start();
 require 'config.php'; // Fichier de configuration pour la connexion à la BDD
 
 // Fonction pour rechercher des livres via l'API Google Books
-function searchBooks($query) {
+function searchBooks($query)
+{
     $apiKey = 'AIzaSyDUNFEKy74YLUS1m_XwxyMJ4LDGBPaJBgQ';
     $url = "https://www.googleapis.com/books/v1/volumes?q=" . urlencode($query) . "&key=" . $apiKey;
     $ch = curl_init();
@@ -31,10 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
-            header('Location: profile.php');
+            header('Location: profil.php');
             exit;
         } else {
-            echo 'Email ou mot de passe incorrect';
+            $error_message = 'Email ou mot de passe incorrect';
         }
     } elseif (isset($_POST['signup'])) {
         // Traitement du signup
@@ -46,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bind_param('ss', $email, $password);
         $stmt->execute();
 
-        echo 'Inscription réussie. Vous pouvez maintenant vous connecter.';
+        $success_message = 'Inscription reussie. Vous pouvez maintenant vous connecter.';
     } elseif (isset($_POST['search'])) {
         // Traitement de la recherche de livres
         $query = $_POST['query'];
@@ -63,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bind_param('issss', $user_id, $book_id, $title, $authors, $thumbnail);
         $stmt->execute();
 
-        echo 'Livre ajouté aux favoris.';
+        $success_message = 'Livre ajoute aux favoris.';
     } elseif (isset($_POST['remove_favorite'])) {
         // Supprimer un livre des favoris
         $favorite_id = $_POST['favorite_id'];
@@ -72,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bind_param('i', $favorite_id);
         $stmt->execute();
 
-        echo 'Livre supprimé des favoris.';
+        $success_message = 'Livre supprime des favoris.';
     }
 }
 
@@ -92,277 +93,185 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
 // Définir un avatar par défaut si aucun avatar n'est défini
-$avatar = !empty($user['avatar']) ? htmlspecialchars($user['avatar']) : 'vf_avatar_main_2075.webp';
+$avatar_src = !empty($user['avatar']) ? htmlspecialchars($user['avatar']) : 'images/vf_avatar_main_2075.webp';
 
-include "video.php";
+$stmt = $mysqli->prepare('SELECT * FROM favorites WHERE user_id = ?');
+$stmt->bind_param('i', $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$favorites = $result->fetch_all(MYSQLI_ASSOC);
 
 ?>
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recherche de livres</title>
-    <style>
-        /* Styles généraux */
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #000000, #3a3a3a);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            color: #fff;
-            overflow-x: hidden;
-        }
-
-        h1, h2 {
-            color: #ffd700; /* Or */
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-            margin: 20px 0;
-        }
-
-        /* Barre de navigation */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 20px 40px;
-            background: rgba(0, 0, 0, 0.8);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            position: fixed;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .navbar a {
-            text-decoration: none;
-            color: #ffd700; /* Or */
-            font-weight: bold;
-            margin: 0 15px;
-            font-size: 18px;
-            transition: color 0.3s ease-in-out;
-        }
-
-        .navbar a:hover {
-            color: #fff; /* Blanc */
-        }
-
-        /* Informations utilisateur */
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-info img {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 3px solid #ffd700; /* Or */
-        }
-
-        .user-info .user-details {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .user-info .user-details span {
-            color: #ffd700; /* Or */
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        .user-info .user-details small {
-            color: #fff; /* Blanc */
-            font-size: 14px;
-        }
-
-        /* Formulaire de recherche */
-        form {
-            display: flex;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-            margin-top: 120px;
-        }
-
-        input[type="text"] {
-            padding: 12px;
-            width: 300px;
-            border: 1px solid #ffd700; /* Or */
-            border-radius: 5px;
-            outline: none;
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus {
-            border-color: #fff; /* Blanc */
-        }
-
-        button {
-            padding: 12px 20px;
-            background: #ffd700; /* Or */
-            color: black;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background: #fff; /* Blanc */
-            color: black;
-        }
-
-        /* Résultats de recherche */
-        ul {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 0;
-            list-style: none;
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .book {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-            width: 220px;
-            text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .book:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.7); /* Or */
-        }
-
-        .book img {
-            width: 100px;
-            height: 150px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-
-        .book p {
-            color: #ffd700; /* Or */
-            font-weight: bold;
-        }
-
-        /* Bouton d'ajout aux favoris */
-        .book button {
-            margin-top: 10px;
-            background: #28a745; /* Vert */
-        }
-
-        .book button:hover {
-            background: #218838; /* Vert foncé */
-        }
-
-        /* Favoris */
-        .book form button[name="remove_favorite"] {
-            background: #dc3545; /* Rouge */
-        }
-
-        .book form button[name="remove_favorite"]:hover {
-            background: #c82333; /* Rouge foncé */
-        }
-
-        /* Arrière-plan vidéo */
-        .background-video, #bg-video {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -1;
-        }
-
-        #bg-video {
-            filter: brightness(0.3);
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <div class="background-video">
-        <video autoplay muted loop id="bg-video">
-            <source src="path/to/your/video.mp4" type="video/mp4">
-        </video>
-    </div>
-    <div class="navbar">
-        <div>
-            <a href="index.php">Accueil</a>
-            <a href="profil.php">Profil</a>
-            <a href="logout.php">Déconnexion</a>
-        </div>
-        <div class="user-info">
-            <img src="images/vf_avatar_main_2075.webp" alt="Avatar">
-            <div class="user-details">
-                <span><?= htmlspecialchars($user['name']) ?></span>
-                
+
+<body class="app-page home-page">
+    <?php include 'video.php'; ?>
+    <div class="page-shell">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark">B</div>
+                <div class="brand-copy">
+                    <strong>Book Space</strong>
+                    <span>Recherche et favoris</span>
+                </div>
             </div>
-        </div>
+            <nav class="nav-links" aria-label="Navigation principale">
+                <a href="index.php" class="is-active">Accueil</a>
+                <a href="profil.php">Profil</a>
+                <a href="logout.php">Deconnexion</a>
+            </nav>
+            <div class="user-chip">
+                <img src="<?= $avatar_src ?>" alt="Avatar de <?= htmlspecialchars($user['name']) ?>">
+                <div>
+                    <strong><?= htmlspecialchars($user['name']) ?></strong>
+                    <small><?= htmlspecialchars($user['email']) ?></small>
+                </div>
+            </div>
+        </header>
+
+        <section class="hero-panel">
+            <div class="hero-copy">
+                <p class="eyebrow">Bibliotheque personnelle</p>
+                <h1>Trouvez vos prochains coups de coeur.</h1>
+                <p>Explorez des milliers d'ouvrages, enregistrez vos favoris et gardez un espace de lecture plus vivant,
+                    plus clair et nettement plus attractif.</p>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <strong><?= count($favorites) ?></strong>
+                        <span>livres en favoris</span>
+                    </div>
+                    <div class="stat-card">
+                        <strong><?= isset($books['items']) ? count($books['items']) : 0 ?></strong>
+                        <span>resultats visibles</span>
+                    </div>
+                    <div class="stat-card">
+                        <strong><?= !empty($user['name']) ? strtoupper(substr($user['name'], 0, 1)) : 'B' ?></strong>
+                        <span>profil actif</span>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="search-card">
+                <h2>Lancer une recherche</h2>
+                <p>Saisissez un titre, un auteur ou un theme, puis ajoutez directement les livres que vous aimez dans
+                    vos favoris.</p>
+                <?php if (isset($success_message)): ?>
+                    <div class="message message-success"><?= htmlspecialchars($success_message) ?></div>
+                <?php endif; ?>
+                <?php if (isset($error_message)): ?>
+                    <div class="message message-error"><?= htmlspecialchars($error_message) ?></div>
+                <?php endif; ?>
+                <form method="POST" class="search-form">
+                    <div>
+                        <label class="field-label" for="query">Recherche</label>
+                        <input id="query" type="text" name="query"
+                            placeholder="Exemple : science-fiction, manga, Victor Hugo..." required>
+                    </div>
+                    <div class="button-row">
+                        <button class="button-primary" type="submit" name="search">Chercher</button>
+                        <a class="button-link button-secondary" href="profil.php">Voir mon profil</a>
+                    </div>
+                </form>
+            </aside>
+        </section>
+
+        <section class="content-panel">
+            <div class="section-heading">
+                <div>
+                    <h2>Resultats de recherche</h2>
+                    <p>Les propositions apparaissent ici apres votre recherche.</p>
+                </div>
+                <?php if (isset($books['items'])): ?>
+                    <p><?= count($books['items']) ?> livre(s) trouve(s)</p>
+                <?php endif; ?>
+            </div>
+
+            <?php if (isset($books['items']) && is_array($books['items'])): ?>
+                <ul class="book-grid">
+                    <?php foreach ($books['items'] as $book): ?>
+                        <?php
+                        $volume = $book['volumeInfo'] ?? [];
+                        $title = $volume['title'] ?? 'Titre indisponible';
+                        $authors = !empty($volume['authors']) ? implode(', ', $volume['authors']) : 'Auteur inconnu';
+                        $thumbnail = $volume['imageLinks']['thumbnail'] ?? 'https://via.placeholder.com/300x420?text=Livre';
+                        ?>
+                        <li class="book-card">
+                            <img class="book-cover" src="<?= htmlspecialchars($thumbnail) ?>"
+                                alt="Couverture de <?= htmlspecialchars($title) ?>">
+                            <div>
+                                <h3><?= htmlspecialchars($title) ?></h3>
+                                <p class="book-meta"><?= htmlspecialchars($authors) ?></p>
+                            </div>
+                            <form method="POST" class="stack-form">
+                                <input type="hidden" name="book_id" value="<?= htmlspecialchars($book['id']) ?>">
+                                <input type="hidden" name="title" value="<?= htmlspecialchars($title) ?>">
+                                <input type="hidden" name="authors" value="<?= htmlspecialchars($authors) ?>">
+                                <input type="hidden" name="thumbnail" value="<?= htmlspecialchars($thumbnail) ?>">
+                                <button class="button-success" type="submit" name="add_favorite">Ajouter aux favoris</button>
+                            </form>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php elseif (isset($books)): ?>
+                <div class="empty-state">
+                    <p>Aucun resultat n'a ete trouve pour cette recherche. Essayez un autre titre, un auteur ou un mot-cle.
+                    </p>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">
+                    <p>Commencez par une recherche pour faire apparaitre des suggestions de livres.</p>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="content-panel">
+            <div class="section-heading">
+                <div>
+                    <h2>Vos favoris</h2>
+                    <p>Retrouvez votre selection personnelle en un coup d'oeil.</p>
+                </div>
+                <p><?= count($favorites) ?> livre(s) enregistres</p>
+            </div>
+
+            <?php if (!empty($favorites)): ?>
+                <ul class="book-grid">
+                    <?php foreach ($favorites as $favorite): ?>
+                        <li class="book-card">
+                            <img class="book-cover" src="<?= htmlspecialchars($favorite['thumbnail']) ?>"
+                                alt="Couverture de <?= htmlspecialchars($favorite['title']) ?>">
+                            <div>
+                                <h3><?= htmlspecialchars($favorite['title']) ?></h3>
+                                <p class="book-meta"><?= htmlspecialchars($favorite['authors']) ?></p>
+                            </div>
+                            <form method="POST" class="stack-form">
+                                <input type="hidden" name="favorite_id" value="<?= (int) $favorite['id'] ?>">
+                                <button class="button-danger" type="submit" name="remove_favorite">Retirer des favoris</button>
+                            </form>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <div class="empty-state">
+                    <p>Vous n'avez pas encore de favoris. Utilisez la recherche ci-dessus pour commencer votre collection.
+                    </p>
+                </div>
+            <?php endif; ?>
+        </section>
     </div>
-    <h1>Recherche de livres</h1>
-    <form method="POST">
-        <input type="text" name="query" placeholder="Rechercher un livre..." required>
-        <button type="submit" name="search">Chercher</button>
-    </form>
-
-    <?php if (isset($books)): ?>
-        <h2>Résultats de la recherche</h2>
-        <ul>
-            <?php foreach ($books['items'] as $book): ?>
-                <li class="book">
-                    <img src="<?= $book['volumeInfo']['imageLinks']['thumbnail'] ?>" alt="<?= $book['volumeInfo']['title'] ?>">
-                    <p><?= $book['volumeInfo']['title'] ?> par <?= implode(', ', $book['volumeInfo']['authors']) ?></p>
-                    <form method="POST">
-                        <input type="hidden" name="book_id" value="<?= $book['id'] ?>">
-                        <input type="hidden" name="title" value="<?= $book['volumeInfo']['title'] ?>">
-                        <input type="hidden" name="authors" value="<?= implode(', ', $book['volumeInfo']['authors']) ?>">
-                        <input type="hidden" name="thumbnail" value="<?= $book['volumeInfo']['imageLinks']['thumbnail'] ?>">
-                        <button type="submit" name="add_favorite">Ajouter aux favoris</button>
-                    </form>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
-
-    <h2>Vos livres favoris</h2>
-    <ul>
-        <?php
-        $user_id = $_SESSION['user_id'];
-        $stmt = $mysqli->prepare('SELECT * FROM favorites WHERE user_id = ?');
-        $stmt->bind_param('i', $user_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $favorites = $result->fetch_all(MYSQLI_ASSOC);
-
-        foreach ($favorites as $favorite) {
-            echo '<li class="book">';
-            echo '<img src="' . $favorite['thumbnail'] . '" alt="' . $favorite['title'] . '">';
-            echo '<p>' . $favorite['title'] . ' par ' . $favorite['authors'] . '</p>';
-            echo '<form method="POST">';
-            echo '<input type="hidden" name="favorite_id" value="' . $favorite['id'] . '">';
-            echo '<button type="submit" name="remove_favorite">Supprimer des favoris</button>';
-            echo '</form>';
-            echo '</li>';
-        }
-        ?>
-    </ul>
 </body>
+
 </html>
